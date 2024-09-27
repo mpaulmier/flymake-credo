@@ -47,7 +47,7 @@
 
 (defcustom flymake-credo-strict t
   "Use credo in a strict mode or not."
-  :group 'fymake-credo
+  :group 'flymake-credo
   :type 'boolean)
 
 (defvar-local flymake-credo--proc nil)
