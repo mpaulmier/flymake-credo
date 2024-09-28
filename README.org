@@ -1,14 +1,15 @@
 #+title: Flymake Credo
-#+author: Vinícius Simões <vinicius.simoes95@gmail.com>
+#+author: Matthias Paulmier <helloømattplm.fr>
 
-Flymake backend for [[https://github.com/rrrene/credo][Credo]].
+Flymake backend for [[https://github.com/rrrene/credo][Credo]]. This is a modified version of Vinícius' work to cope
+with the weird version of credo I use at work.
 
 * Installation
 ** Manually
 Clone Flymake Credo repository to an arbitrary location:
 
 #+begin_src sh
-  $ git clone https://github.com/vinikira/flymake-credo ~/.emacs.d/site-elisp/flymake-credo
+  $ git clone https://github.com/mpaulmier/flymake-credo ~/.emacs.d/site-elisp/flymake-credo
 #+end_src
 
 Add Flymake Credo directory to load-path in your Emacs initialization file (init.el) and load it.
@@ -26,7 +27,7 @@ Add the following to your config file in order to install using straight:
 
 #+begin_src emacs-lisp
   (straight-use-package
-   '(flymake-credo :type git :host github :repo "vinikira/flymake-credo" :branch "main"))
+   '(flymake-credo :type git :host github :repo "mpaulmier/flymake-credo" :branch "main"))
 #+end_src
 
 * Customize
