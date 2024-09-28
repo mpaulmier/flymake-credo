@@ -1,7 +1,7 @@
 #+title: Flymake Credo
-#+author: Matthias Paulmier <helloømattplm.fr>
+#+author: Matthias Paulmier <hello@mattplm.fr>
 
-Flymake backend for [[https://github.com/rrrene/credo][Credo]]. This is a modified version of Vinícius' work to cope
+Flymake backend for [[https://github.com/rrrene/credo][Credo]]. This is a modified version of [[https://github.com/vinikira/flymake-credo][vinika's work]] to cope
 with the weird version of credo I use at work.
 
 * Installation
