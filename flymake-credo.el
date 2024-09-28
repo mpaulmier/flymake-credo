@@ -1,7 +1,7 @@
 ;;; flymake-credo.el --- Flymake backend for Credo. -*- lexical-binding: t -*-
 
 ;; Author: Vinícius Simões
-;; Maintainer: Vinícius Simões
+;; Maintainer: Matthias Paulmier
 ;; Version: 0.0.1
 ;; Package-Requires: ((emacs "27"))
 ;; Homepage: homepage
@@ -13,6 +13,7 @@
 ;; The MIT License (MIT)
 
 ;; Copyright © 2022 <Vinícius Simões>
+;;             2024 <Matthias Paulmier>
 
 ;; Permission is hereby granted, free of charge, to any person obtaining
 ;; a copy of this software and associated documentation files (the
