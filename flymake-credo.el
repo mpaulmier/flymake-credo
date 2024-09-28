@@ -54,6 +54,14 @@
 
 (defvar-local flymake-credo--command nil)
 
+(defun flymake-credo--filter-credo-output (output)
+  "Filter lines that are not json from the credo output"
+  (with-temp-buffer
+    (insert output)
+    (beginning-of-buffer)
+    (delete-matching-lines "^\\[info\\] .*$")
+    (buffer-string)))
+
 (defun flymake-credo (report-fn &rest _args)
   "Credo linter backend for Flymake.
 Check for problems, then call REPORT-FN with results."
@@ -76,6 +84,10 @@ Check for problems, then call REPORT-FN with results."
                               (if project
                                   (expand-file-name (project-root project))
                                 (buffer-name))))
+         (stderr-buffer-name (format "*flymake-credo errors for %s* "
+                                    (if project
+                                        (expand-file-name (project-root project))
+                                      (buffer-name))))
          (default-directory (if project
                                 (expand-file-name (project-root project))
                               default-directory))
@@ -92,36 +104,37 @@ Check for problems, then call REPORT-FN with results."
              :command `(,@flymake-credo--command
                         "list"
                         ,(if flymake-credo-strict "--strict" "")
-                        "--format=json"
+                        "--format"
+                        "json"
                         "--read-from-stdin")
+             :stderr stderr-buffer-name
              :sentinel
              (lambda (proc _event)
                (when (eq 'exit (process-status proc))
                  (unwind-protect
                      (if (with-current-buffer source (eq proc flymake-credo--proc))
-                         (when-let* ((json-string (with-current-buffer (process-buffer proc)
-                                                    (buffer-string)))
-                                     (object (ignore-errors (json-parse-string
-                                                             json-string
-                                                             :null-object nil)))
-                                     (issues (gethash "issues" object)))
-                           (cl-loop
-                            for issue across issues
-                            for (beg . end) = (flymake-diag-region
-                                               source
-                                               (gethash "line_no" issue)
-                                               (gethash "column" issue))
-                            collect (flymake-make-diagnostic source
-                                                             beg
-                                                             end
-                                                             :warning
-                                                             (gethash "message" issue))
-                            into diags
-                            finally (funcall report-fn diags)))
-                       (flymake-log :warning "Canceling obsolete check %s"
-                                    proc))
-                   (kill-buffer (process-buffer proc)))))))
-
+                       (when-let* ((json-string (with-current-buffer (process-buffer proc)
+                                                  (flymake-credo--filter-credo-output (buffer-string))))
+                                   (object (ignore-errors (json-parse-string
+                                                           json-string
+                                                           :null-object nil)))
+                                   (issues (gethash "issues" object)))
+                         (cl-loop
+                          for issue across issues
+                          for (beg . end) = (flymake-diag-region
+                                             source
+                                             (gethash "line_no" issue)
+                                             (gethash "column" issue))
+                          collect (flymake-make-diagnostic source
+                                                           beg
+                                                           end
+                                                           :warning
+                                                           (gethash "message" issue))
+                          into diags
+                          finally (funcall report-fn diags)))
+                       (flymake-log :warning "Cancelling obsolete check %s" proc))))
+               (kill-buffer (process-buffer proc))
+               (kill-buffer stderr-buffer-name))))
       (process-send-region flymake-credo--proc (point-min) (point-max))
       (process-send-eof flymake-credo--proc))))
 
