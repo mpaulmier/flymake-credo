@@ -51,6 +51,11 @@
   :group 'flymake-credo
   :type 'boolean)
 
+(defcustom flymake-credo-min-priority 0
+  "Min priority of error to display."
+  :group 'flymake-credo
+  :type 'integer)
+
 (defvar-local flymake-credo--proc nil)
 
 (defvar-local flymake-credo--command nil)
@@ -107,7 +112,9 @@ Check for problems, then call REPORT-FN with results."
                         ,(if flymake-credo-strict "--strict" "")
                         "--format"
                         "json"
-                        "--read-from-stdin")
+                        "--read-from-stdin"
+                        "--min-priority"
+                        ,flymake-credo-min-priority)
              :stderr stderr-buffer-name
              :sentinel
              (lambda (proc _event)
@@ -142,7 +149,9 @@ Check for problems, then call REPORT-FN with results."
 ;;;###autoload
 (defun flymake-credo-load ()
   "Setup flymake to be used with credo linter."
-  (add-hook 'flymake-diagnostic-functions #'flymake-credo nil t))
+  (unless (memq 'flymake-credo flymake-diagnostic-functions)
+    (make-local-variable 'flymake-diagnostic-functions)
+    (push 'flymake-credo flymake-diagnostic-functions)))
 
 (add-hook 'elixir-mode-hook #'flymake-credo-load)
 
