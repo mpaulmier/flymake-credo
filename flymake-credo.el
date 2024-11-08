@@ -126,28 +126,36 @@ Check for problems, then call REPORT-FN with results."
              (lambda (proc _event)
                (when (eq 'exit (process-status proc))
                  (unwind-protect
-                     (if (with-current-buffer source (eq proc flymake-credo--proc))
-                         (when-let* ((json-string (with-current-buffer (process-buffer proc)
-                                                    (buffer-string)))
-                                     (object (ignore-errors (json-parse-string
-                                                             json-string
-                                                             :null-object nil)))
-                                     (issues (gethash "issues" object)))
-                           (cl-loop
-                            for issue across issues
-                            for (beg . end) = (flymake-diag-region
-                                               source
-                                               (gethash "line_no" issue)
-                                               (gethash "column" issue))
-                            collect (flymake-make-diagnostic source
-                                                             beg
-                                                             end
-                                                             :warning
-                                                             (gethash "message" issue))
-                            into diags
-                            finally (funcall report-fn diags)))
-                       (flymake-log :warning "Canceling obsolete check %s"
-                                    proc))
+                     (with-current-buffer source
+                       (if (eq proc flymake-credo--proc)
+                           (when-let* ((json-string (with-current-buffer (process-buffer proc)
+                                                      (buffer-string)))
+                                       (object (ignore-errors (json-parse-string
+                                                               json-string
+                                                               :null-object nil)))
+                                       (issues (gethash "issues" object)))
+                             (cl-loop
+                              for issue across issues
+                              for lineno = (or (gethash "line_no" issue) 0)
+                              for column = (or (gethash "column" issue) (save-excursion
+                                                                          (goto-line lineno)
+                                                                          (back-to-indentation)
+                                                                          (1+ (current-column))))
+                              for column-end = (or (gethash "column_end" issue) (save-excursion
+                                                                                  (goto-line lineno)
+                                                                                  (end-of-line)
+                                                                                  (1+ (current-column))))
+                              for (beg . _end) = (flymake-diag-region source lineno column)
+                              when lineno
+                              collect (flymake-make-diagnostic source
+                                                               beg
+                                                               (+ beg (- column-end column))
+                                                               :warning
+                                                               (gethash "message" issue))
+                              into diags
+                              finally (funcall report-fn diags)))
+                         (flymake-log :warning "Cancelling obsolete check %s"
+                                      proc)))
                    (kill-buffer (process-buffer proc))
                    (kill-buffer stderr-buffer-name))))))
 
