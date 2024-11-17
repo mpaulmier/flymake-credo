@@ -1,12 +1,11 @@
-;;; flymake-credo.el --- Flymake backend for Credo. -*- lexical-binding: t -*-
+;;; flymake-credo.el --- Flymake backend for Credo -*- lexical-binding: t -*-
 
 ;; Author: Vinícius Simões
 ;; Maintainer: Vinícius Simões
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "27"))
-;; Homepage: homepage
-;; Keywords: credo elixir elisp flymake
-
+;; Package-Requires: ((emacs "28.1"))
+;; Homepage: https://github.com/vinikira/flymake-credo
+;; Keywords: languages
 
 ;; This file is not part of GNU Emacs
 
@@ -34,11 +33,17 @@
 ;; SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ;;; Commentary:
+
+;; Provides a utility function to interface with credo, a linting tool for the
+;; Elixir programming language.
+
+;; See function `flymake-credo-load'.
+
 ;;; Code:
 
 (require 'json)
 (require 'project)
-(require 'cl-macs)
+(require 'cl-lib)
 
 (defgroup flymake-credo nil
   "Flymake credo functionalites."
@@ -56,14 +61,18 @@
   :type 'integer)
 
 (defcustom flymake-credo-config-file nil
-  "Config file to use with credo. When non-nil, the config file will
-be passed to the `--config-file' option"
+  "Config file to use with credo.
+
+When non-nil, the config file will be passed to the
+`--config-file' option of the credo cli"
   :group 'flymake-credo
   :type 'string)
 
 (defcustom flymake-credo-config-name "default"
-  "Config name to use with credo. When non-nil, the config name will
-be passed to the `--config-name' option"
+  "Config name to use with credo.
+
+When non-nil, the config name will be passed to the
+`--config-name' option of the credo cli"
   :group 'flymake-credo
   :type 'string)
 
