@@ -30,8 +30,14 @@ Add the following to your config file in order to install using straight:
 #+end_src
 
 * Customize
+
 Note: To see all the options from Emacs directly, and to customize it, just
 type: M-x customize-group RET flymake-credo RET.
+
+- =flymake-credo-strict= :: wether to pass the =--strict= option to credo
+- =flymake-credo-min-priority= :: minimum warning priority to be displayed in the buffer
+- =flymake-credo-config-file= :: use a different config file than =.credo.exs=
+- =flymake-credo-config-name= :: use a different config name than =default=
 
 * References
 - https://github.com/federicotdn/flymake-shellcheck
