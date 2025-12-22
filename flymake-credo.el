@@ -71,6 +71,8 @@ be passed to the `--config-name' option"
 
 (defvar-local flymake-credo--command nil)
 
+(defvar-local flymake-credo--check-cache nil)
+
 (defun flymake-credo--get-column (lineno goto-column-fn)
   (save-excursion
     (save-restriction
@@ -109,6 +111,20 @@ Otherwise, return the end of the line in key `line_no' of `ISSUE'"
       (forward-char (1- column))
       (point))))
 
+(defun flymake-credo--echo-info (_window object _pos)
+  (let ((check (overlay-get object 'flymake-credo--overlay-check)))
+    (pcase flymake-credo--check-cache
+      ((and
+        `(,cached-check . ,text)
+        (guard (string-equal check cached-check)))
+       text)
+      (_
+       (let* ((credo-command (overlay-get object 'flymake-credo--overlay-credo-command))
+              (command (format "%s explain --no-color --format flycheck %s 2> /dev/null" credo-command check))
+              (default-directory (overlay-get object 'flymake-credo--overlay-dir)))
+         (setq flymake-credo--check-cache (cons check (shell-command-to-string command)))
+         (cdr flymake-credo--check-cache))))))
+
 (defun flymake-credo (report-fn &rest _args)
   "Credo linter backend for Flymake.
 Check for problems, then call REPORT-FN with results."
@@ -132,9 +148,9 @@ Check for problems, then call REPORT-FN with results."
                                   (expand-file-name (project-root project))
                                 (buffer-name))))
          (stderr-buffer-name (format "*flymake-credo errors for %s* "
-                              (if project
-                                  (expand-file-name (project-root project))
-                                (buffer-name))))
+                                     (if project
+                                         (expand-file-name (project-root project))
+                                       (buffer-name))))
          (default-directory (if project
                                 (expand-file-name (project-root project))
                               default-directory))
@@ -178,7 +194,18 @@ Check for problems, then call REPORT-FN with results."
                                                                beg
                                                                end
                                                                :warning
-                                                               (gethash "message" issue))
+                                                               (concat (gethash "check" issue)
+                                                                       ": "
+                                                                       (gethash "message" issue))
+                                                               nil
+                                                               (list
+                                                                (cons 'help-echo #'flymake-credo--echo-info)
+                                                                (cons 'flymake-credo--overlay-check (gethash "check" issue))
+                                                                (cons 'flymake-credo--overlay-credo-command (string-join flymake-credo--command " "))
+                                                                (cons 'flymake-credo--overlay-dir (if project
+                                                                                                      (expand-file-name (project-root project))
+                                                                                                    default-directory))
+                                                                ))
                               into diags
                               finally (funcall report-fn diags)))
                          (flymake-log :warning "Cancelling obsolete check %s" proc))))
